@@ -1,0 +1,19 @@
+video:
+  width: 1920
+  height: 1080
+
+pipeline:
+  source:
+    type: device
+
+  spectrum:
+    type: spectrum
+    inputs: source
+
+  eq:
+    type: equalizer
+    inputs: spectrum
+
+  sink:
+    type: rtsp
+    inputs: eq

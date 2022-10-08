@@ -1,0 +1,25 @@
+video:
+  width: 1920
+  height: 1080
+
+pipeline:
+  source:
+    type: device
+
+  loudness:
+    type: loudness
+    inputs: source
+
+  average:
+    type: average
+    inputs: loudness
+    options:
+      smoothing-factor: 0.2
+
+  circle:
+    type: circle
+    inputs: average
+
+  sink:
+    type: rtsp
+    inputs: circle

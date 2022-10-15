@@ -4,6 +4,7 @@ use crate::{
     util::{inputs::validate_inputs, video::VideoConfig, Error, FrameId},
 };
 
+#[derive(Debug)]
 pub struct Average {
     input: NodeRef,
     alpha: f32,

@@ -7,6 +7,7 @@ use crate::{
     },
 };
 
+#[derive(Debug)]
 pub struct Merge {
     inputs: Vec<NodeRef>,
     contributions: Vec<f32>,

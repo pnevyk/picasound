@@ -11,6 +11,7 @@ use crate::{
     },
 };
 
+#[derive(Debug)]
 pub struct RandomColor {
     cells: Vec<((usize, usize), (usize, usize))>,
     last_id: FrameId,

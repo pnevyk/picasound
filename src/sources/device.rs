@@ -4,6 +4,7 @@ use crate::{
     util::{audio::AudioBuffer, inputs::validate_inputs, video::VideoConfig, Error, FrameId},
 };
 
+#[derive(Debug)]
 pub struct DeviceSource {
     stream: streams::StreamHandle,
     buf: AudioBuffer,
@@ -159,6 +160,7 @@ mod streams {
     #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub struct StreamId(usize);
 
+    #[derive(Debug)]
     pub struct StreamHandle(usize);
 
     impl StreamHandle {

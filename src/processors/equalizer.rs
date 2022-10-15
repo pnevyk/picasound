@@ -8,6 +8,7 @@ use crate::{
     },
 };
 
+#[derive(Debug)]
 pub struct Equalizer {
     input: NodeRef,
 }

@@ -1,4 +1,4 @@
-use std::{borrow::Borrow, collections::HashMap, hash::Hash, sync::Arc};
+use std::{borrow::Borrow, collections::HashMap, fmt, hash::Hash, sync::Arc};
 
 use atomic_refcell::AtomicRefCell;
 
@@ -16,7 +16,7 @@ use crate::{
 };
 
 #[allow(unused_variables)]
-pub trait Node: Send + Sync {
+pub trait Node: Send + Sync + fmt::Debug {
     fn is_sink(&self) -> bool {
         false
     }
@@ -56,7 +56,7 @@ pub enum Capability {
     ProvideNumber,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct NodeRef(Arc<AtomicRefCell<dyn Node>>);
 
 impl NodeRef {

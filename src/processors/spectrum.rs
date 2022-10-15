@@ -9,6 +9,7 @@ use crate::{
     },
 };
 
+#[derive(Debug)]
 pub struct SpectrumNode {
     input: NodeRef,
     spectrum: SpectrumStore,

@@ -14,6 +14,7 @@ use crate::{
 
 const MOUNT_PATH: &str = "/picasound";
 
+#[derive(Debug)]
 pub struct RtspSink {
     main_loop: glib::MainLoop,
     server: gst_rtsp_server::RTSPServer,

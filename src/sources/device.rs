@@ -1,6 +1,6 @@
 use crate::{
     options::Options,
-    pipeline::{node_ref, Capability, ConstructNode, Node, NodeFactory, NodeRef},
+    pipeline::{Capability, ConstructNode, Node, NodeFactory, NodeRef},
     util::{audio::AudioBuffer, inputs::validate_inputs, video::VideoConfig, Error, FrameId},
 };
 
@@ -46,8 +46,8 @@ impl Node for DeviceSource {
         matches!(cap, Capability::ProvideAudioData)
     }
 
-    fn provide_audio_data(&self, _: FrameId) -> &AudioBuffer {
-        &self.buf
+    fn provide_audio_data(&mut self, _: FrameId) -> AudioBuffer {
+        self.buf.clone()
     }
 }
 
@@ -67,7 +67,7 @@ impl ConstructNode for Construct {
         _: Options,
         config: VideoConfig,
     ) -> Result<NodeRef, Error> {
-        DeviceSource::new(inputs, config).map(node_ref)
+        DeviceSource::new(inputs, config).map(NodeRef::new)
     }
 }
 

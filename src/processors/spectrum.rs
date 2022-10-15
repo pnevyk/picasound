@@ -1,6 +1,6 @@
 use crate::{
     options::{Options, Value},
-    pipeline::{node_ref, Capability, ConstructNode, Node, NodeFactory, NodeRef},
+    pipeline::{Capability, ConstructNode, Node, NodeFactory, NodeRef},
     util::{
         inputs::validate_inputs,
         spectrum::{Spectrum, SpectrumStore, Stft, Window},
@@ -51,13 +51,14 @@ impl Node for SpectrumNode {
         matches!(cap, Capability::ProvideSpectrum)
     }
 
-    fn provide_spectrum(&self, id: FrameId) -> Spectrum {
+    fn provide_spectrum(&mut self, id: FrameId) -> Spectrum {
         let data = self.input.provide_audio_data(id);
-        self.spectrum.compute(
+        let spectrum = self.spectrum.compute(
             id,
             &data.exact(self.spectrum.window_len()),
             data.sample_rate(),
-        )
+        );
+        spectrum
     }
 }
 
@@ -77,7 +78,7 @@ impl ConstructNode for Construct {
         options: Options,
         _: VideoConfig,
     ) -> Result<NodeRef, Error> {
-        SpectrumNode::new(inputs, options).map(node_ref)
+        SpectrumNode::new(inputs, options).map(NodeRef::new)
     }
 }
 

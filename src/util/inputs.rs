@@ -1,4 +1,4 @@
-use crate::pipeline::{Capability, NodeRef};
+use crate::pipeline::{Capability, Node, NodeRef};
 
 use super::Error;
 

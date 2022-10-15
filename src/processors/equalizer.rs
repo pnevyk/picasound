@@ -1,6 +1,6 @@
 use crate::{
     options::Options,
-    pipeline::{node_ref, Capability, ConstructNode, Node, NodeFactory, NodeRef},
+    pipeline::{Capability, ConstructNode, Node, NodeFactory, NodeRef},
     util::{
         inputs::validate_inputs,
         video::{VideoConfig, VideoFrame},
@@ -25,7 +25,7 @@ impl Node for Equalizer {
         matches!(cap, Capability::ProvideVideoFrame)
     }
 
-    fn provide_video_frame(&self, id: FrameId, frame: &mut VideoFrame) {
+    fn provide_video_frame(&mut self, id: FrameId, frame: &mut VideoFrame) {
         let spectrum = self.input.provide_spectrum(id);
         let n_bins = spectrum.len();
         let bin_width = (frame.width() as f32 / n_bins as f32).ceil() as usize;
@@ -61,7 +61,7 @@ impl ConstructNode for Construct {
         _: Options,
         _: VideoConfig,
     ) -> Result<NodeRef, Error> {
-        Equalizer::new(inputs).map(node_ref)
+        Equalizer::new(inputs).map(NodeRef::new)
     }
 }
 

@@ -4,7 +4,7 @@ use gstreamer_rtsp_server::traits::RTSPServerExt;
 
 use crate::{
     options::Options,
-    pipeline::{node_ref, Capability, ConstructNode, Node, NodeFactory, NodeRef},
+    pipeline::{Capability, ConstructNode, Node, NodeFactory, NodeRef},
     util::{
         inputs::validate_inputs,
         video::{VideoConfig, VideoFrame},
@@ -80,7 +80,7 @@ fn setup_factory(input: NodeRef, config: VideoConfig) -> gst_rtsp_server::RTSPMe
         true,
         glib::closure!(|_: &gst_rtsp_server::RTSPMediaFactory,
                         media: &gst_rtsp_server::RTSPMedia| {
-            let input = input.clone();
+            let mut input = input.clone();
 
             let element = media.element().unwrap();
             let source = element
@@ -135,8 +135,8 @@ impl Node for RtspSink {
         true
     }
 
-    fn start(&self) -> Result<(), Error> {
-        self.start();
+    fn start(&mut self) -> Result<(), Error> {
+        (*self).start();
         Ok(())
     }
 }
@@ -157,7 +157,7 @@ impl ConstructNode for Construct {
         _: Options,
         config: VideoConfig,
     ) -> Result<NodeRef, Error> {
-        RtspSink::new(inputs, config).map(node_ref)
+        RtspSink::new(inputs, config).map(NodeRef::new)
     }
 
     fn is_sink(&self) -> bool {

@@ -1,6 +1,9 @@
 use std::{env, fs::File};
 
-use picasound::{load::PipelineConfig, pipeline::NodeFactory};
+use picasound::{
+    load::PipelineConfig,
+    pipeline::{Node, NodeFactory},
+};
 
 fn main() {
     let path = env::args().last().expect("pipeline file not specified");
@@ -8,7 +11,7 @@ fn main() {
     let config = PipelineConfig::from_reader(file).unwrap();
     let sinks = config.pipeline(&NodeFactory::default()).unwrap();
 
-    for sink in sinks {
+    for mut sink in sinks {
         sink.start().unwrap();
     }
 }

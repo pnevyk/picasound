@@ -1,23 +1,21 @@
-use std::sync::{atomic::Ordering, Mutex};
-
 use rand::Rng;
 
 use crate::{
     options::Options,
-    pipeline::{node_ref, Capability, ConstructNode, Node, NodeFactory, NodeRef},
+    pipeline::{Capability, ConstructNode, Node, NodeFactory, NodeRef},
     util::{
         inputs::validate_inputs,
         misc::FrameCounter,
         video::{VideoConfig, VideoFrame},
-        Error, FrameId, LastFrameId,
+        Error, FrameId,
     },
 };
 
 pub struct RandomColor {
     cells: Vec<((usize, usize), (usize, usize))>,
-    last_id: LastFrameId,
+    last_id: FrameId,
     frame_counter: FrameCounter,
-    cache: Mutex<VideoFrame>,
+    cache: VideoFrame,
 }
 
 impl RandomColor {
@@ -41,10 +39,10 @@ impl RandomColor {
             }
         }
 
-        let last_id = LastFrameId::default();
+        let last_id = FrameId::default();
         let frame_counter =
             FrameCounter::new((update_every * config.fps() as f32 / 1000.0).round() as usize);
-        let cache = Mutex::new(VideoFrame::new(config.width(), config.height()));
+        let cache = VideoFrame::new(config.width(), config.height());
 
         Ok(Self {
             cells,
@@ -86,9 +84,8 @@ impl Node for RandomColor {
         matches!(cap, Capability::ProvideVideoFrame)
     }
 
-    fn provide_video_frame(&self, id: FrameId, frame: &mut VideoFrame) {
-        if self.last_id.store_if_not_eq(id) && self.frame_counter.fetch_inc(Ordering::Relaxed) == 0
-        {
+    fn provide_video_frame(&mut self, id: FrameId, frame: &mut VideoFrame) {
+        if self.last_id.update(id) && self.frame_counter.fetch_inc() == 0 {
             let mut rng = rand::thread_rng();
 
             if self.cells.len() == 1 {
@@ -119,9 +116,9 @@ impl Node for RandomColor {
                 });
             }
 
-            self.cache.lock().unwrap().copy_from(frame);
+            self.cache.copy_from(frame);
         } else {
-            frame.copy_from(&self.cache.lock().unwrap());
+            frame.copy_from(&self.cache);
         }
     }
 }
@@ -142,7 +139,7 @@ impl ConstructNode for Construct {
         options: Options,
         config: VideoConfig,
     ) -> Result<NodeRef, Error> {
-        RandomColor::new(inputs, options, config).map(node_ref)
+        RandomColor::new(inputs, options, config).map(NodeRef::new)
     }
 }
 

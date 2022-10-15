@@ -1,5 +1,7 @@
 use std::{borrow::Borrow, collections::HashMap, hash::Hash, sync::Arc};
 
+use atomic_refcell::AtomicRefCell;
+
 use crate::{
     options::Options,
     processors::{average, circle, equalizer, loudness, merge, spectrum},
@@ -19,7 +21,7 @@ pub trait Node: Send + Sync {
         false
     }
 
-    fn start(&self) -> Result<(), Error> {
+    fn start(&mut self) -> Result<(), Error> {
         assert!(self.is_sink(), "only sinks can be started");
         Ok(())
     }
@@ -28,19 +30,19 @@ pub trait Node: Send + Sync {
         false
     }
 
-    fn provide_audio_data(&self, id: FrameId) -> &AudioBuffer {
+    fn provide_audio_data(&mut self, id: FrameId) -> AudioBuffer {
         panic!("provide_audio_data not available")
     }
 
-    fn provide_video_frame(&self, id: FrameId, frame: &mut VideoFrame) {
+    fn provide_video_frame(&mut self, id: FrameId, frame: &mut VideoFrame) {
         panic!("provide_video_frame not available")
     }
 
-    fn provide_spectrum(&self, id: FrameId) -> Spectrum {
+    fn provide_spectrum(&mut self, id: FrameId) -> Spectrum {
         panic!("provide_spectrum not available")
     }
 
-    fn provide_number(&self, id: FrameId) -> f32 {
+    fn provide_number(&mut self, id: FrameId) -> f32 {
         panic!("provide_number not available")
     }
 }
@@ -54,10 +56,43 @@ pub enum Capability {
     ProvideNumber,
 }
 
-pub type NodeRef = Arc<dyn Node>;
+#[derive(Clone)]
+pub struct NodeRef(Arc<AtomicRefCell<dyn Node>>);
 
-pub fn node_ref<N: Node + 'static>(node: N) -> NodeRef {
-    Arc::new(node)
+impl NodeRef {
+    pub fn new<N: Node + 'static>(node: N) -> Self {
+        Self(Arc::new(AtomicRefCell::new(node)))
+    }
+}
+
+impl Node for NodeRef {
+    fn is_sink(&self) -> bool {
+        AtomicRefCell::borrow(&self.0).is_sink()
+    }
+
+    fn start(&mut self) -> Result<(), Error> {
+        AtomicRefCell::borrow_mut(&self.0).start()
+    }
+
+    fn has_capability(&self, cap: Capability) -> bool {
+        AtomicRefCell::borrow(&self.0).has_capability(cap)
+    }
+
+    fn provide_audio_data(&mut self, id: FrameId) -> AudioBuffer {
+        AtomicRefCell::borrow_mut(&self.0).provide_audio_data(id)
+    }
+
+    fn provide_video_frame(&mut self, id: FrameId, frame: &mut VideoFrame) {
+        AtomicRefCell::borrow_mut(&self.0).provide_video_frame(id, frame)
+    }
+
+    fn provide_spectrum(&mut self, id: FrameId) -> Spectrum {
+        AtomicRefCell::borrow_mut(&self.0).provide_spectrum(id)
+    }
+
+    fn provide_number(&mut self, id: FrameId) -> f32 {
+        AtomicRefCell::borrow_mut(&self.0).provide_number(id)
+    }
 }
 
 pub struct NodeRegistry {

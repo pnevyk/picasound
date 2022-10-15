@@ -1,15 +1,13 @@
-use std::sync::atomic::Ordering;
-
 use crate::{
     options::Options,
-    pipeline::{node_ref, Capability, ConstructNode, Node, NodeFactory, NodeRef},
-    util::{inputs::validate_inputs, misc::AtomicF32, video::VideoConfig, Error, FrameId},
+    pipeline::{Capability, ConstructNode, Node, NodeFactory, NodeRef},
+    util::{inputs::validate_inputs, video::VideoConfig, Error, FrameId},
 };
 
 pub struct Average {
     input: NodeRef,
     alpha: f32,
-    average: AtomicF32,
+    average: f32,
 }
 
 impl Average {
@@ -25,7 +23,7 @@ impl Average {
         Ok(Self {
             input,
             alpha,
-            average: AtomicF32::default(),
+            average: 0.0,
         })
     }
 }
@@ -35,12 +33,10 @@ impl Node for Average {
         matches!(cap, Capability::ProvideNumber)
     }
 
-    fn provide_number(&self, id: FrameId) -> f32 {
+    fn provide_number(&mut self, id: FrameId) -> f32 {
         let current = self.input.provide_number(id);
-        let previous = self.average.load(Ordering::Relaxed);
-        let average = (self.alpha * current) + (1.0 - self.alpha) * previous;
-        self.average.store(average, Ordering::Relaxed);
-        average
+        self.average = (self.alpha * current) + (1.0 - self.alpha) * self.average;
+        self.average
     }
 }
 
@@ -60,7 +56,7 @@ impl ConstructNode for Construct {
         options: Options,
         _: VideoConfig,
     ) -> Result<NodeRef, Error> {
-        Average::new(inputs, options).map(node_ref)
+        Average::new(inputs, options).map(NodeRef::new)
     }
 }
 

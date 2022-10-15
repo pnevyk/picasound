@@ -1,17 +1,12 @@
-use std::{
-    fmt,
-    ops::Deref,
-    sync::{Arc, Mutex},
-};
-
 use realfft::{num_complex::Complex, RealFftPlanner, RealToComplex};
+use std::{fmt, ops::Deref, sync::Arc};
 
-use super::{FrameId, LastFrameId};
+use super::FrameId;
 
 pub struct SpectrumStore {
-    spectrum: Arc<Mutex<dyn ComputeSpectrum + Send + Sync>>,
+    spectrum: Box<dyn ComputeSpectrum + Send + Sync>,
     window_len: usize,
-    last_id: LastFrameId,
+    last_id: FrameId,
     frequency_range: Option<(f32, f32)>,
 }
 
@@ -41,19 +36,18 @@ impl SpectrumStore {
 
         let window_len = spectrum.window_len();
         Self {
-            spectrum: Arc::new(Mutex::new(spectrum)),
+            spectrum: Box::new(spectrum),
             window_len,
-            last_id: LastFrameId::default(),
+            last_id: FrameId::default(),
             frequency_range,
         }
     }
 
-    pub fn compute(&self, id: FrameId, data: &[f32], sample_rate: usize) -> Spectrum {
-        let mut guard = self.spectrum.lock().unwrap();
-        let spectrum = if self.last_id.store_if_not_eq(id) {
-            guard.compute(data)
+    pub fn compute(&mut self, id: FrameId, data: &[f32], sample_rate: usize) -> Spectrum {
+        let spectrum = if self.last_id.update(id) {
+            self.spectrum.compute(data)
         } else {
-            guard.get()
+            self.spectrum.get()
         };
 
         let orig_len = spectrum.len();
@@ -81,7 +75,7 @@ impl SpectrumStore {
 impl fmt::Debug for SpectrumStore {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("SpectrumStore")
-            .field("spectrum", &self.spectrum.lock().unwrap().name())
+            .field("spectrum", &self.spectrum.name())
             .field("window_len", &self.window_len)
             .field("last_id", &self.last_id)
             .field("frequency_range", &self.frequency_range)

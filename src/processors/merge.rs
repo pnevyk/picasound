@@ -1,6 +1,6 @@
 use crate::{
     options::Options,
-    pipeline::{node_ref, Capability, ConstructNode, Node, NodeFactory, NodeRef},
+    pipeline::{Capability, ConstructNode, Node, NodeFactory, NodeRef},
     util::{
         video::{VideoConfig, VideoFrame},
         Error, FrameId,
@@ -65,7 +65,7 @@ impl Node for Merge {
         matches!(cap, Capability::ProvideVideoFrame)
     }
 
-    fn provide_video_frame(&self, id: FrameId, frame: &mut VideoFrame) {
+    fn provide_video_frame(&mut self, id: FrameId, frame: &mut VideoFrame) {
         self.inputs[0].provide_video_frame(id, frame);
 
         let c1 = self.contributions[0];
@@ -82,7 +82,7 @@ impl Node for Merge {
 
             for (input, c) in self
                 .inputs
-                .iter()
+                .iter_mut()
                 .zip(self.contributions.iter().copied())
                 .skip(1)
             {
@@ -131,7 +131,7 @@ impl ConstructNode for Construct {
         options: Options,
         _: VideoConfig,
     ) -> Result<NodeRef, Error> {
-        Merge::new(inputs, options).map(node_ref)
+        Merge::new(inputs, options).map(NodeRef::new)
     }
 }
 

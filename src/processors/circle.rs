@@ -1,6 +1,6 @@
 use crate::{
     options::Options,
-    pipeline::{node_ref, Capability, ConstructNode, Node, NodeFactory, NodeRef},
+    pipeline::{Capability, ConstructNode, Node, NodeFactory, NodeRef},
     util::{
         inputs::validate_inputs,
         video::{VideoConfig, VideoFrame},
@@ -24,7 +24,7 @@ impl Node for Circle {
         matches!(cap, Capability::ProvideVideoFrame)
     }
 
-    fn provide_video_frame(&self, id: FrameId, frame: &mut VideoFrame) {
+    fn provide_video_frame(&mut self, id: FrameId, frame: &mut VideoFrame) {
         let radius = self.input.provide_number(id);
 
         let radius = (radius * frame.width().min(frame.height()) as f32) as usize;
@@ -75,7 +75,7 @@ impl ConstructNode for Construct {
         _: Options,
         _: VideoConfig,
     ) -> Result<NodeRef, Error> {
-        Circle::new(inputs).map(node_ref)
+        Circle::new(inputs).map(NodeRef::new)
     }
 }
 

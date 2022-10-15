@@ -6,7 +6,10 @@ use picasound::{
 };
 
 fn main() {
-    let path = env::args().last().expect("pipeline file not specified");
+    let path = env::args()
+        .skip(1)
+        .last()
+        .expect("pipeline file not specified");
     let file = File::open(path).expect("could not read pipeline file");
     let config = PipelineConfig::from_reader(file).unwrap();
     let sinks = config.pipeline(&NodeFactory::default()).unwrap();
